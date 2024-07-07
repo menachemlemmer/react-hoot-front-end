@@ -1,11 +1,13 @@
 import { useState, createContext, useEffect } from "react";
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, useNavigate } from "react-router-dom";
 import NavBar from "./components/NavBar/NavBar";
 import Landing from "./components/Landing/Landing";
 import Dashboard from "./components/Dashboard/Dashboard";
 import SignupForm from "./components/SignupForm/SignupForm";
 import SigninForm from "./components/SigninForm/SigninForm";
 import HootList from "./components/HootList/HootList";
+import HootDetails from "./components/HootDetails/HootDetails";
+import HootForm from "./components/HootForm/HootForm";
 import * as authService from "../src/services/authService";
 import * as hootService from "./services/hootService";
 
@@ -14,6 +16,7 @@ export const AuthedUserContext = createContext(null);
 const App = () => {
   const [user, setUser] = useState(authService.getUser());
   const [hoots, setHoots] = useState([]);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchAllHoots = async () => {
@@ -28,6 +31,18 @@ const App = () => {
     setUser(null);
   };
 
+  const handleAddHoot = async (hootFormData) => {
+    const newHoot = await hootService.create(hootFormData);
+    setHoots([newHoot, ...hoots]);
+    navigate("/hoots");
+  };
+
+  const handleDeleteHoot = async (hootId) => {
+    const deletedHoot = await hootService.deleteHoot(hootId);
+    setHoots(hoots.filter((hoot) => hoot._id !== deletedHoot._id));
+    navigate("/hoots");
+  };
+
   return (
     <>
       <AuthedUserContext.Provider value={user}>
@@ -37,6 +52,15 @@ const App = () => {
             <>
               <Route path="/" element={<Dashboard user={user} />} />
               <Route path="/hoots" element={<HootList hoots={hoots} />} />
+              <Route
+                path="/hoots/:hootId"
+                element={<HootDetails handleDeleteHoot={handleDeleteHoot} />}
+              />
+              <Route
+                path="/hoots/new"
+                element={<HootForm handleAddHoot={handleAddHoot} />}
+              />
+              <Route path="/hoots/:hootId/edit" element={<HootForm />} />
             </>
           ) : (
             <Route path="/" element={<Landing />} />
