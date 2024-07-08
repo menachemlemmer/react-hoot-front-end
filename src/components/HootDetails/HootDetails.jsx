@@ -4,6 +4,10 @@ import { AuthedUserContext } from "../../App";
 import { Link } from "react-router-dom";
 import CommentForm from "../CommentForm/CommentForm";
 import * as hootService from "../../services/hootService";
+import styles from './HootDetails.module.css';
+import Loading from '../Loading/Loading';
+import Icon from '../Icon/Icon';
+import AuthorInfo from '../../components/AuthorInfo/AuthorInfo';
 
 const HootDetails = (props) => {
   const [hoot, setHoot] = useState(null);
@@ -23,24 +27,39 @@ const HootDetails = (props) => {
     setHoot({ ...hoot, comments: [...hoot.comments, newComment] });
   };
 
-  if (!hoot) return <main>Loading...</main>;
+  const handleDeleteComment = async (commentId) => {
+    const deletedComment = await hootService.deleteComment(hootId, commentId);
+    setHoot({
+      ...hoot,
+      comments: hoot.comments.filter(
+        (comment) => comment._id !== deletedComment._id,
+      ),
+    });
+  };
+
+  if (!hoot) return <Loading />
   return (
-    <main className="m-2 space-y-2 p-2">
+    <main className={styles.container}>
+      <section>
       <header>
         <p>{hoot.category.toUpperCase()}</p>
-        <h1 className="text-2xl">{hoot.title}</h1>
-        <p className="text-sm">
-          {hoot.author.username} posted on
-          {new Date(hoot.createdAt).toLocaleDateString()}
-        </p>
+        <h1>{hoot.title}</h1>
+        <div>
+        <AuthorInfo content={hoot} />
+          {hoot.author._id === user._id && (
+          <>
+            <Link to={`/hoots/${hootId}/edit`}>
+              <Icon category="Edit" />
+            </Link>
+            <button onClick={() => props.handleDeleteHoot(hootId)}>
+            <Icon category="Trash" />
+            </button>
+          </>
+                )}
+        </div>
       </header>
       <p>{hoot.text}</p>
-      {hoot.author._id === user._id && (
-        <>
-          <Link to={`/hoots/${hootId}/edit`}>Edit</Link>
-          <button onClick={() => props.handleDeleteHoot(hootId)}>Delete</button>
-        </>
-      )}
+      </section>
       <section>
         <h2>Comments</h2>
         <CommentForm handleAddComment={handleAddComment} />
@@ -50,10 +69,19 @@ const HootDetails = (props) => {
         {hoot.comments.map((comment) => (
           <article key={comment._id}>
             <header>
-              <p>
-                {comment.author.username} posted on
-                {new Date(comment.createdAt).toLocaleDateString()}
-              </p>
+              <div>
+              <AuthorInfo content={comment} />
+                {comment.author._id === user._id && (
+                  <>
+                    <Link to={`/hoots/${hootId}/comments/${comment._id}/edit`}>
+                      <Icon category="Edit" />
+                    </Link>
+                    <button onClick={() => handleDeleteComment(comment._id)}>
+                      <Icon category="Trash" />
+                    </button>
+                    </>
+                )}
+              </div>
             </header>
             <p>{comment.text}</p>
           </article>

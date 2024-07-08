@@ -1,10 +1,10 @@
 import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import * as hootService from "../../services/hootService";
+import styles from "./HootForm.module.css";
 
 const HootForm = (props) => {
   const { hootId } = useParams();
-  console.log(hootId);
 
   const [formData, setFormData] = useState({
     title: "",
@@ -26,11 +26,15 @@ const HootForm = (props) => {
 
   const handleSubmit = (evt) => {
     evt.preventDefault();
-    props.handleAddHoot(formData);
+    if (hootId) {
+      props.handleUpdateHoot(hootId, formData);
+    } else {
+      props.handleAddHoot(formData);
+    }
   };
 
   return (
-    <main>
+    <main className={styles.container}>
       <form onSubmit={handleSubmit}>
         <h1>{hootId ? "Edit Hoot" : "New Hoot"}</h1>
         <label htmlFor="title-input">Title</label>
